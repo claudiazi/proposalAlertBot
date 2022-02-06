@@ -33,4 +33,5 @@ export const updateProposal = async (proposalIndex, updates, timelineItem?, moti
     }
 
     await col.updateOne({ proposalIndex }, update);
+    
 };

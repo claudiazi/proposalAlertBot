@@ -28,20 +28,9 @@ export const botParams: BotParams = {
 };
 
 export const getKeyboard = async (ctx): Promise<Keyboard> => {
-  const userCol = await getUserCollection();
-  const user = await userCol.findOne({ chatId: ctx.chat.id });
-  if (user.broadcast) {
-    return new Keyboard()
-      .text("➕ Add alert").row()
-      .text("📒 My addresses/alerts").row()
-      .text("✅ Turn off new motion/tip broadcasting").row();
-  }
-  else {
-    return new Keyboard()
-      .text("➕ Add alert").row()
-      .text("📒 My addresses/alerts").row()
-      .text("❌ Turn on new motion/tip broadcasting").row();
-  }
+  return new Keyboard()
+    .text("➕ Add alert").row()
+    .text("📒 My addresses/alerts").row();
 };
 
 export const getDb = async (): Promise<void> => {

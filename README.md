@@ -1,22 +1,19 @@
-# Council Alert Telegram Bot
+Credits to [gabrieljaegerde](https://github.com/gabrieljaegerde/tipAlert_telegram) whose project this one was built on top of.
 
-With this bot users will be notified of any new council events. Additionally, users can set up alerts for their respective address(es). Should their address be a council member, they will receive reminders on missing council actions required from them.
+# Proposal Alert Telegram Bot
 
-This project is open-source and your contributions more than welcome!!!
+With this bot users can easily track their treasury proposals as they pass through council. Whenever there is an update to it, they will receive a notification on telegram.
 
-If you enjoy this tool and would like to support my future projects:
-
-KSM: Hgcdd6sjp37KD1cKrAbwMZ6sBZTAVwb6v2GTssv9L2w1oN3
-
-Much appreciated!
+Looking to support me?
+KSM: HyQGoQZk5BM3Wt6nUhjW1QbPWrSRFmR4eeEihPJH84WdDsA
 
 ## Usage
 
 Setting up an alert is super easy:
 
-Step 1: Select the frequency for which you would like to be reminded for the different council events.
+Step 1: Select the proposal motion events that you want to be notified for (new motion, motion vote, motion fully voted)
 
-Step 2: Enter address of wallet that should be tracked.
+Step 2: Enter address of wallet that should be tracked
 
 A user can easily view, edit and delete any of their alerts.
 

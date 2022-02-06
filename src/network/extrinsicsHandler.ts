@@ -1,11 +1,9 @@
 import { GenericCall } from "@polkadot/types";
 import { logger } from "../../tools/logger.js";
 import { Modules, MultisigMethods, ProxyMethods, SudoMethods, TipMethods, UtilityMethods } from "../../tools/constants.js";
-import { handleTipCall } from "./tip/handleTipCall.js";
 import { calcMultisigAddress, isExtrinsicSuccess, tryInitCall } from "../../tools/utils.js";
 import { hexToU8a } from "@polkadot/util";
 import { botParams } from "../../config.js";
-import { handleAcceptCurator } from "./bounty/handleAcceptCurator.js";
 
 const extractExtrinsicEvents = (events, extrinsicIndex) => {
     return events.filter((event) => {
@@ -15,8 +13,8 @@ const extractExtrinsicEvents = (events, extrinsicIndex) => {
 };
 
 const handleCall = async (call, author, extrinsicIndexer, events) => {
-    await handleTipCall(call, author, extrinsicIndexer);
-    await handleAcceptCurator(call, author, extrinsicIndexer);
+    // await handleTipCall(call, author, extrinsicIndexer);
+    // await handleAcceptCurator(call, author, extrinsicIndexer);
 }
 
 const unwrapProxy = async (call, signer, extrinsicIndexer, events) => {

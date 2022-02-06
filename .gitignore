@@ -5,3 +5,4 @@ metrics.js
 dist/
 log/
 localStorage/localStorage.json
+.idea/

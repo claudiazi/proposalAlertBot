@@ -116,19 +116,3 @@ export const isProposalMotion = (section, method) => {
             TreasuryProposalMethods.rejectProposal,
         ].includes(method);
 };
-
-export const isBountyMotion = (section, method) => {
-    return [Modules.Treasury, Modules.Bounties].includes(section) && [
-        BountyMethods.approveBounty,
-        BountyMethods.proposeCurator,
-        BountyMethods.unassignCurator,
-        BountyMethods.closeBounty,
-    ].includes(method);
-};
-
-export const isStateChangeBountyMotion = (method) => {
-    return [
-      BountyMethods.approveBounty,
-      BountyMethods.closeBounty,
-    ].includes(method)
-  }

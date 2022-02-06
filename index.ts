@@ -3,14 +3,11 @@ import { getSettings } from "./tools/settings.js";
 import { BlockCountAdapter } from "./tools/blockCountAdapter.js";
 import dotenv from "dotenv";
 import * as bot from "./bot.js";
-import { bigNumberArithmetic, send } from "./tools/utils.js";
 import { getApi } from "./tools/substrateUtils.js";
 import { ApiPromise } from "@polkadot/api";
 import { Low } from "lowdb/lib";
 import mongoose from "mongoose";
 import { BlockListener } from "./src/network/blockListener.js";
-import { getUserCollection } from "./src/mongo/index.js";
-import { sendNotifications } from "./src/notification/sendNotifications.js";
 
 dotenv.config();
 
@@ -18,10 +15,6 @@ class SubstrateBot {
   settings: any;
   api: ApiPromise;
   localStorage: Low;
-  motionHourly: NodeJS.Timer;
-  motionDaily: NodeJS.Timer;
-  tipHourly: NodeJS.Timer;
-  tipDaily: NodeJS.Timer;
   /**
    * Create SubstrateBot instance
    * @param config - SubstrateBot config
@@ -60,25 +53,11 @@ class SubstrateBot {
     const { runnerHandle, tBot } = await bot.start();
     botParams.bot = tBot;
     botParams.runnerHandle = runnerHandle;
-    botParams.blockCountAdapter = new BlockCountAdapter(botParams.localStorage, "headerBlock");
-    botParams.blockListener = new BlockListener(botParams.api,
-      botParams.blockCountAdapter);
-
-    //hourly job motion
-    this.motionHourly = setInterval(function () { sendNotifications("motion", "hourly"); }, 1000 * 60 * 60);
-    //daily job motion
-    this.motionDaily = setInterval(function () { sendNotifications("motion", "daily"); }, 1000 * 60 * 60 * 24);
-    //hourly job tip
-    this.tipHourly = setInterval(function () { sendNotifications("tip", "hourly"); }, 1000 * 60 * 60);
-    //daily job tip
-    this.tipDaily = setInterval(function () { sendNotifications("tip", "daily"); }, 1000 * 60 * 60 * 24);
+    new BlockListener(botParams.api,
+      new BlockCountAdapter(botParams.localStorage, "headerBlock"));
   }
 
   async stop() {
-    clearInterval(this.motionHourly);
-    clearInterval(this.motionDaily);
-    clearInterval(this.tipHourly);
-    clearInterval(this.tipDaily);
     await botParams.runnerHandle.stop();
     console.log("bot stopped.");
     await mongoose.connection.close(false);
@@ -96,7 +75,6 @@ async function main() {
     api
   });
   await substrateBot.run();
-
   process.once('SIGINT', () => {
     substrateBot.stop();
   });
@@ -106,4 +84,3 @@ async function main() {
 }
 
 main();
-

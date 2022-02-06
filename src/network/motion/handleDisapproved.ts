@@ -1,23 +1,71 @@
 import { updateMotionByHash } from "../../mongo/service/motion.js";
 import { BountyStatus, CouncilEvents, TimelineItemTypes, TreasuryProposalEvents } from "../../../tools/constants.js";
-import { getMotionCollection } from "../../mongo/index.js";
-import { updateBounty } from "../../mongo/service/bounty.js";
-import { getBountyMeta } from "../bounty/bountyHelpers.js";
 import { updateProposal } from "../../mongo/service/treasuryProposal.js";
-import { isStateChangeBountyMotion } from "./motionHelpers.js";
+import { getAlertCollection, getMotionCollection, getProposalCollection, getUserCollection } from "../../mongo/index.js";
+import { botParams } from "../../../config.js";
+import { InlineKeyboard } from "grammy";
+import { escapeMarkdown, getAccountName, send } from "../../../tools/utils.js";
 
-async function handleBounty(bountyIndex, indexer) {
-  const state = {
-    indexer,
-    // If a bounty proposal(close or approve) motion is not passed, we reset the treasury bounty state to `Proposed`
-    state: BountyStatus.Proposed,
-  };
-
-  const meta = await getBountyMeta(indexer.blockHash, bountyIndex);
-  if (meta) {
-    await updateBounty(bountyIndex, { meta, state });
+const sendDisapprovedMessages = async (motion) => {
+  const alertCol = await getAlertCollection();
+  const userCol = await getUserCollection();
+  const chain = botParams.settings.network.name.toLowerCase();
+  const inlineKeyboard = new InlineKeyboard().url("PolkAssembly",
+    `https://${chain}.polkassembly.io/motion/${motion.index}`);
+  for (const proposalMotion of motion.treasuryProposals) {
+    const proposalIndex = proposalMotion.index
+    const proposalCol = await getProposalCollection();
+    const proposal = await proposalCol.findOne({ proposalIndex })
+    if (proposal.proposer === proposal.beneficiary) {
+      const alerts = await alertCol.find(
+        { address: proposal.beneficiary }
+      ).toArray();
+      for (const alert of alerts) {
+        if (alert && alert.done) {
+          const user = await userCol.findOne({ chatId: alert.chatId });
+          if (user && !user.blocked) {
+            const message = `*Alert for ${escapeMarkdown(await getAccountName(proposal.beneficiary, true))}*\n\n` +
+              "The motion created for a proposal of which this wallet is " +
+              "beneficiary and proposer has just been rejected\\!\n\n" +
+              `*Proposal Index*: _${proposalMotion.index}_`;
+            await send(user.chatId, message, "MarkdownV2", inlineKeyboard);
+          }
+        }
+      }
+      return;
+    }
+    const alertsBeneficiary = await alertCol.find(
+      { address: proposal.beneficiary }
+    ).toArray();
+    for (const alertBeneficiary of alertsBeneficiary) {
+      if (alertBeneficiary && alertBeneficiary.done) {
+        const user = await userCol.findOne({ chatId: alertBeneficiary.chatId });
+        if (user && !user.blocked) {
+          const message = `*Alert for ${escapeMarkdown(await getAccountName(proposal.beneficiary, true))}*\n\n` +
+            "The motion created for a proposal of which this wallet is " +
+            "beneficiary has just been rejected\\!\n\n" +
+            `*Proposal Index*: _${proposalMotion.index}_`;
+          await send(user.chatId, message, "MarkdownV2", inlineKeyboard);
+        }
+      }
+    }
+    const alertsProposer = await alertCol.find(
+      { address: proposal.proposer }
+    ).toArray();
+    for (const alertProposer of alertsProposer) {
+      if (alertProposer && alertProposer.done) {
+        const user = await userCol.findOne({ chatId: alertProposer.chatId });
+        if (user && !user.blocked) {
+          const message = `*Alert for ${escapeMarkdown(await getAccountName(proposal.beneficiary, true))}*\n\n` +
+            "The motion created for a proposal of which this wallet is " +
+            "proposer has just been rejected\\!\n\n" +
+            `*Proposal Index*: _${proposalMotion.index}_`;
+          await send(user.chatId, message, "MarkdownV2", inlineKeyboard);
+        }
+      }
+    }
   }
-}
+};
 
 async function handleProposal(treasuryProposalIndex, indexer) {
   const state = {
@@ -39,12 +87,8 @@ async function handleBusinessWhenMotionDisapproved(motionHash, indexer) {
   for (const { index } of motion.treasuryProposals || []) {
     await handleProposal(index, indexer);
   }
+  sendDisapprovedMessages(motion)
 
-  for (const { index, method } of motion.treasuryBounties || []) {
-    if (isStateChangeBountyMotion(method)) {
-      await handleBounty(index, indexer);
-    }
-  }
 }
 
 export const handleDisapproved = async (event, extrinsic, indexer) => {

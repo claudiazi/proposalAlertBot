@@ -210,12 +210,6 @@ export const findCallInSections = (call, sections, targetMethod) => {
   return null;
 };
 
-export const getCouncilMembers = async (blockHash) => {
-  const blockApi = await botParams.api.at(blockHash);
-  const members = await blockApi.query.council.members();
-  return members.map((member) => { return member.toString(); });
-};
-
 export const escapeMarkdown = (text) => {
   var unescaped = text.replace(/\\(\*|_|`|~|\.|!|\[|\]|\(|\)|~|>|#|\+|-|=|\||\{|\}|\\)/g, '$1'); // unescape any "backslashed" character
   var escaped = unescaped.replace(/(\*|_|`|~|\.|!|\[|\]|\(|\)|~|>|#|\+|-|=|\||\{|\}|\\)/g, '\\$1'); // escape *, _, `, ~, \

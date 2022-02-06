@@ -5,38 +5,50 @@ import _ from "lodash";
 import { getAlertCollection } from "../mongo/index.js";
 import { StatelessQuestion } from '@grammyjs/stateless-question';
 import { botParams, getKeyboard } from "../../config.js";
-import { selectFrequency } from "./selectFrequency.js";
 
 const alerts = [
     {
-        name: "tips",
-        frequency: "daily",
+        name: "new",
+        selected: true,
     },
     {
-        name: "motions",
-        frequency: "hourly",
+        name: "voted",
+        selected: true,
+    },
+    {
+        name: "done",
+        selected: true,
     }
 ];
 
-export let userAlerts = alerts;
+let userAlerts = alerts;
 
 export const addAlert = new MenuTemplate(async (ctx: Context) => {
-    let info = `Please select the reminder frequency for the respective event. I will only send you ` +
-        `reminders when the address is a coucil member and until it has voted.`;
+    let info = `What events would you like to get alerts for?\n\n` + 
+    `new - get notified when a motion is created for a proposal that your wallet is involved in\n` + 
+    `voted - get notified when that motion is voted on\n` +
+    `done - get notified when that motion is fully voted on`;
+    if (userAlerts.filter(e => e.selected).length == 0) {
+        info += `\n\nPlease select at least one event for which you would like to receive alerts.`;
+    }
     return { text: info, parse_mode: "Markdown" };
 });
 
-addAlert.chooseIntoSubmenu('sf',
+addAlert.select(
+    "a",
     ctx => {
         return userAlerts.map(a => a.name);
     },
-    selectFrequency,
     {
-        buttonText: async (ctx: Context, key) => {
-            if (key === "")
-                return;
-            const alert = userAlerts.filter(function (item) { return item.name === key; })[0];
-            return (`${key} (⏰ ${alert.frequency})`);
+        showFalseEmoji: true,
+        isSet: (ctx, key) => userAlerts.find(
+            e => e.name === key
+        ).selected,
+        set: (ctx, key, newState) => {
+            userAlerts.find(
+                e => e.name == key
+            ).selected = newState;
+            return true;
         },
         columns: 1
     }
@@ -48,19 +60,25 @@ addAlert.interact(
     {
         do: async (ctx) => {
             await deleteMenuFromContext(ctx);
-            var replyMsg = `You have selected the following reminder frequencies:
+            var replyMsg = `You have selected the following events:
             `;
             userAlerts
+                .filter(u => u.selected)
                 .forEach(
                     e =>
                     (replyMsg += `
-    - ${e.name}: ${e.frequency} reminders`)
+    - ${userAlerts.find(m => m.name == e.name).name}`)
                 );
             replyMsg += `
-
+            
 Please send me a public address of a ${botParams.settings.network.name} account ` +
-                `that you want to link to this alert.`;
+                `that you want to link to these events.`;
             enterAddress.replyWithMarkdown(ctx, replyMsg);
+            return false;
+        },
+        hide: ctx => {
+            if (userAlerts.filter(e => e.selected).length == 0)
+                return true;
             return false;
         },
     }
@@ -98,12 +116,15 @@ export const enterAddress = new StatelessQuestion("adr", async (ctx) => {
         await alertCol.insertOne({
             chatId: ctx.chat.id,
             address: ctx.message.text,
-            tips: userAlerts.find(
-                e => e.name === "tips"
-            ).frequency,
-            motions: userAlerts.find(
-                e => e.name === "motions"
-            ).frequency,
+            new: userAlerts.find(
+                e => e.name === "new"
+            ).selected,
+            voted: userAlerts.find(
+                e => e.name === "voted"
+            ).selected,
+            done: userAlerts.find(
+                e => e.name === "done"
+            ).selected,
             createdAt: new Date()
         });
         const message = "Alert setup! ✅";

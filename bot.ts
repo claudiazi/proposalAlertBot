@@ -1,10 +1,11 @@
 import { Bot, GrammyError, HttpError } from "grammy";
 import { botParams, getKeyboard } from "./config.js";
-import { apiThrottler } from "@grammyjs/transformer-throttler";
+import { apiThrottler, APIThrottlerOptions } from "@grammyjs/transformer-throttler";
 import { run, RunnerHandle } from "@grammyjs/runner";
 import { getUserCollection } from "./src/mongo/index.js";
 import { listAlertsMiddleware } from "./src/alert/listAlerts.js";
 import { addAlertMiddleware, enterAddress } from "./src/alert/addAlert.js";
+import { Bottleneck } from "@grammyjs/transformer-throttler/dist/deps.node";
 
 export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; }> => {
 
@@ -13,8 +14,14 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
    */
 
   const bot = new Bot(botParams.settings.botToken);
-
-  //bot.api.config.use(apiThrottler());
+  // const outConfig: Bottleneck.ConstructorOptions = {
+  //   maxConcurrent: 1, // only 1 job at a time
+  //   minTime: 1000, // wait this many milliseconds to be ready, after a job
+  // };
+  // const throttleOptions: APIThrottlerOptions = {
+  //   out: outConfig
+  // };
+  //bot.api.config.use(apiThrottler(throttleOptions));
 
   /*
    *   /start command handler
@@ -34,7 +41,6 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
           chatId: ctx.chat.id,
           type: ctx.chat.type,
           blocked: false,
-          broadcast: true,
           createdAt: new Date()
         });
       }
@@ -45,9 +51,10 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
           }
         );
       }
-      message = `Welcome to the ${botParams.settings.network.name} Council Alert bot.\n\n` +
-        `Simply add an alert for your wallet and I will help you stay on top of your council obligations.\n\n` +
-        `From a Dotsama Freelancer with love. 🤎`;
+      message = `Welcome to the ${botParams.settings.network.name} ProposalAlert bot.\n\n` +
+        `The days of refreshing polkadot.js or doTreasury ` +
+        `are over!\n\nSimply add an alert for your wallet and I will notify you here of any changes ` +
+        `to your proposal requests.`;
       await ctx.reply(
         message,
         {
@@ -88,60 +95,6 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
   bot.hears("➕ Add alert", async (ctx) => {
     if (ctx.chat.type == "private") {
       addAlertMiddleware.replyToContext(ctx);
-    }
-  });
-
-  /*
-   *   react bot on '✅ Turn off new motion/tip broadcasting' message
-   */
-
-  bot.hears("✅ Turn off new motion/tip broadcasting", async (ctx) => {
-    if (ctx.chat.type == "private") {
-      const userCol = await getUserCollection();
-
-      await userCol.findOneAndUpdate({ chatId: ctx.chat.id },
-        {
-          $set: { broadcast: false }
-        }
-      );
-      const message = "You will no longer be notified of new tip requests and motions.\n\n" +
-        "Your alerts (should you have set any) are unaffected and still active.";
-      await ctx.reply(
-        message,
-        {
-          reply_markup: {
-            keyboard: (await getKeyboard(ctx)).build(),
-            resize_keyboard: true
-          },
-          parse_mode: "Markdown",
-        }
-      );
-    }
-  });
-
-  /*
-   *   react bot on '❌ Turn on new motion/tip broadcasting' message
-   */
-
-  bot.hears("❌ Turn on new motion/tip broadcasting", async (ctx) => {
-    if (ctx.chat.type == "private") {
-      const userCol = await getUserCollection();
-      await userCol.findOneAndUpdate({ chatId: ctx.chat.id },
-        {
-          $set: { broadcast: true }
-        }
-      );
-      const message = "You will from now on be notified of new tip requests and motions.";
-      await ctx.reply(
-        message,
-        {
-          reply_markup: {
-            keyboard: (await getKeyboard(ctx)).build(),
-            resize_keyboard: true
-          },
-          parse_mode: "Markdown",
-        }
-      );
     }
   });
 

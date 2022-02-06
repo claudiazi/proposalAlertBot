@@ -12,22 +12,18 @@ function getDbName() {
     return dbName;
 }
 
-const tipCollectionName = "tip";
 const motionCollectionName = "motion";
 const proposalCollectionName = "proposal";
-const bountyCollectionName = "bounty";
 const userCollectionName = "user";
 const alertCollectionName = "alert";
 
 let client = null;
 let db = null;
 const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017";
-let tipCol = null;
 let userCol = null;
 let alertCol = null;
 let motionCol = null;
 let proposalCol = null;
-let bountyCol = null;
 
 export async function initDb() {
     client = await MongoClient.connect(mongoUri);
@@ -35,12 +31,10 @@ export async function initDb() {
     const dbName = getDbName();
     console.log('dbName:', dbName);
     db = client.db(dbName);
-    tipCol = db.collection(tipCollectionName);
     userCol = db.collection(userCollectionName);
     alertCol = db.collection(alertCollectionName);
     motionCol = db.collection(motionCollectionName);
     proposalCol = db.collection(proposalCollectionName);
-    bountyCol = db.collection(bountyCollectionName);
     await _createIndexes();
 }
 
@@ -62,11 +56,6 @@ export async function getUserCollection() {
     return userCol;
 }
 
-export async function getTipCollection() {
-    await tryInit(tipCol);
-    return tipCol;
-}
-
 export async function getAlertCollection() {
     await tryInit(alertCol);
     return alertCol;
@@ -80,9 +69,4 @@ export async function getMotionCollection() {
 export async function getProposalCollection() {
     await tryInit(proposalCol);
     return proposalCol;
-}
-
-export async function getBountyCollection() {
-    await tryInit(bountyCol);
-    return bountyCol;
 }
