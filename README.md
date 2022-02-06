@@ -5,6 +5,7 @@ Credits to [gabrieljaegerde](https://github.com/gabrieljaegerde/tipAlert_telegra
 With this bot users can easily track their treasury proposals as they pass through council. Whenever there is an update to it, they will receive a notification on telegram.
 
 Looking to support me?
+
 KSM: HyQGoQZk5BM3Wt6nUhjW1QbPWrSRFmR4eeEihPJH84WdDsA
 
 ## Usage
